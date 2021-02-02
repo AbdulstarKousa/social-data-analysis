@@ -1,1 +1,2 @@
-# social-data-analysis
+# Social Data Analysis and Visualization 2021
+Repository for the requirements of the course [02806 Social data analysis and visualization](https://kurser.dtu.dk/course/2020-2021/02806) running in the spring semester 2021. This the official [wiki](https://github.com/suneman/socialdata2021/wiki) of the course on github.
