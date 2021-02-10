@@ -63,14 +63,15 @@ for i in range(nFiles):
 lr = list(map(lambda x: stats.linregress(x[:,0],x[:,1]), data))
 
 # Plot x-y data and their Linear Regression Result
-#fig, ax = plt.subplots(2,2)
 for i in range(nFiles):
     x = data[i][:,0]
     y = data[i][:,1]
     ylr = lr[i].intercept + lr[i].slope*x
     
     plt.subplot(int('22'+str(i+1)))
-    plt.scatter(x,y, c='green')
-    plt.plot(x,ylr, c= "red", marker='.', linestyle=':')
+    plt.scatter(x,y)
+    plt.plot(x,ylr, c= "red", linestyle=':')
+    plt.xlim((2, 20))
+    plt.ylim((2, 14))
     plt.grid()
 plt.show()

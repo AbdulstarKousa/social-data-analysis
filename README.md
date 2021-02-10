@@ -10,10 +10,18 @@ Repository for the requirements of the course [02806 Social data analysis and vi
 
 ## Project Directory Structure  
     .
-    └── Code  			    		# Root Folder (can be any name)
-        ├── Datasets                # Folder of datasets used in weekly notebooks
+    └── /Code  			    		# Root Folder (can be any name)
+        ├── /Datasets               # Folder of datasets used in weekly notebooks
         │    │ 						# Example of Dataset inside 
-        │    └── Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv
+        │    ├─ Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv
+        │    └─ ...
         │    
-        ├── Week1.ipynb           	# Example of weekly jupyter notebook
-        └── README.md               # Project Documentation
+        ├── Week1.ipynb           	# Example of clean weekly jupyter notebook
+        ├── ...          
+        │
+        ├── README.md               # Project Documentation
+        │ 
+        ├── /Abdul                  # Folder: Abdul's space
+        ├── /Alex                   # Folder: Alex' space        
+        └── /Asterios               # Folder: Asterios' space
+
