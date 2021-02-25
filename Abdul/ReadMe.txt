@@ -3,4 +3,4 @@
 
 - Note!
     To run the script "CrimeProblem"
-    you might need to set the variable Local to False "Local to False" on Line 32. 
+    you might need to set the variable Local to False "Local = False" on Line 32. 
