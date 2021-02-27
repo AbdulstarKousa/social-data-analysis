@@ -573,4 +573,15 @@ mapSF2
 # > * For each of the three examples above, describe in your own words how the data-errors I call attention to above can bias the binned versions of the data. Also briefly mention how not noticing these errors can result in misconceptions about the underlying patterns of what's going on in San Francisco (and our modeling).
 
 
-# %%
+# %% [markdown]
+"""
+Write here  
+Write here  
+Write here  
+Write here   
+Write here  
+Write here  
+"""
+
+
+# %% [markdown]
