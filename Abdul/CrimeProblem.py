@@ -1,37 +1,20 @@
-# %% [markdown]
 ####################################
 # Week 01:
 ####################################
 
-
-# %% [markdown]
-"""
 # [Reading Materials](https://www.sciencemag.org/news/2016/09/can-predictive-policing-prevent-crime-it-happens)
-# Libraries and Dataset:
-"""
 
-
-# %% [markdown]
-"""
-## import main libraries
-"""
-# %%
+# import main libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
+import folium       # for map
 
-
-# %% [markdown]
-"""
-## Loading the data as pandas DataFrame:
-** Note if you working from Git then consider setting Local to False below **  
-"""
-
-
-# %% 
+# Loading the data as pandas DataFrame:
+""" Note if you working from Git then consider setting Local to False below """  
 Local = False # False if from git
 if Local : # Access data locally from Abdul machine 
-    data_dir = r"C:\Users\boody\OneDrive - Danmarks Tekniske Universitet\01 MSc\2st Semester\01_SD\Lectures\01\Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv"
+    data_dir = r"C:\Users\boody\OneDrive - Danmarks Tekniske Universitet\01 MSc\2st Semester\01_SD\GitHub_Group\social-data-analysis\Datasets\Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv"
     Data = pd.read_csv(data_dir) 
 else:   # Access data from Git Repo 
         # Note! If you change the path of this script on git repo you need to change the data_dir below
@@ -40,104 +23,45 @@ else:   # Access data from Git Repo
     data_dir = os.path.abspath(os.path.join(os.getcwd(),'..','Datasets', fileName))
     Data = pd.read_csv(data_dir) 
 
-# %%
+
 # Take a look at the data head 
 Data.head(n=2)
  
-
-# %% [markdown]
-"""
 # Report the total number of crimes in the dataset:
-"""
-# %%
 Data['Date'].count()
 
-
-
-# %% [markdown]
-"""
 # List the various categories of crime:
-"""
-# %%
 Data['Category'].unique()
 
-
-
-# %% [markdown]
-"""
 # How many crime category are there?
-"""
-# %%
 Data['Category'].nunique()
 
-
-
-# %% [markdown]
-"""
 # List the number of crimes in each category:
-"""
-# %%
 Data['Category'].value_counts(ascending=False)
 
-
-
-# %% [markdown]
-"""
 # Create a histogram over crime occurrences:
-"""
-# %%
 Data['Category'].value_counts(ascending=False).plot(kind='bar', figsize =(8,8))
 
-
-
-# %% [markdown]
-"""
 # Count the number of crimes per year for the years 2003-2017 (since we don't have full data for 2018). What's the average number of crimes per year?
-"""
-# %%
 Data['Year'] = pd.to_datetime(Data['Date']).dt.year
 Data = Data[Data['Year'] != 2018]
 
-# %% [markdown]
-"""
-### Number of crimes per years from 2003 to 2018 (not included):
-"""
-# %%
+# Number of crimes per years from 2003 to 2018 (not included):
 Data['Year'].value_counts(ascending=True)
 
-# %% [markdown]
-"""
-### Average number of crimes from 2003 up to 2018 (not included):
-"""
-# %%
+# Average number of crimes from 2003 up to 2018 (not included):
 Data['Year'].value_counts(ascending=True).mean()
 
-
-# %% [markdown]
-"""
-### Police chief Suneman is interested in the temporal development of only a subset of categories, the so-called focus crimes. Those categories are listed below (for convenient copy-paste action).
-"""
-# %%
+# Police chief Suneman is interested in the temporal development of only a subset of categories,
+# the so-called focus crimes. Those categories are listed below (for convenient copy-paste action).
 focuscrimes = set(['WEAPON LAWS', 'PROSTITUTION', 'DRIVING UNDER THE INFLUENCE', 'ROBBERY', 'BURGLARY', 'ASSAULT', 'DRUNKENNESS', 'DRUG/NARCOTIC', 'TRESPASS', 'LARCENY/THEFT', 'VANDALISM', 'VEHICLE THEFT', 'STOLEN PROPERTY', 'DISORDERLY CONDUCT'])
 data = Data[Data['Category'].isin(list(focuscrimes))]
 
-# %% [markdown]
-"""
 # Now create bar-charts displaying the year-by-year development of each of these categories across the years 2003-2017.
-"""
-# %% [markdown]
-"""
-### Example of single plot for WEAPON LAWS
-"""
-# %%
+""" Example of single plot for WEAPON LAWS"""
 data.groupby(['Category','Year']).count()['PdId'] ['WEAPON LAWS'] .plot(kind='bar', figsize=(9,5))
 
-
-# %% [markdown]
-"""
-### Plots for year-by-year development for all Focus Crimes
-"""
-# %%
+""" Plots for year-by-year development for all Focus Crimes"""
 focuscrimes_lst = [ 'WEAPON LAWS', 'DRUNKENNESS',
                     'TRESPASS','PROSTITUTION',
                     'DRIVING UNDER THE INFLUENCE','BURGLARY',
@@ -153,14 +77,11 @@ for i,ax in enumerate(axs.flat):
     group_count[focuscrimes_lst[i]] .plot(kind='bar',ax=ax)
 
 
-
-# %% [markdown]
-"""
 # Comment on at least three interesting trends in your plot.
-Also, here's a fun fact: 
-The drop in car thefts is due to new technology called 'engine immobilizer systems' 
-get the full story [here](https://www.nytimes.com/2014/08/12/upshot/heres-why-stealing-cars-went-out-of-fashion.html):
-
+# Also, here's a fun fact: 
+# The drop in car thefts is due to new technology called 'engine immobilizer systems' 
+# get the full story [here](https://www.nytimes.com/2014/08/12/upshot/heres-why-stealing-cars-went-out-of-fashion.html):
+"""
 * VECHICLE THEFT:
     Huge decrease in occurrences after 2005 when the engine immobilizer systam
     was introduced. Take a look [here](https://www.nytimes.com/2014/08/12/upshot/heres-why-stealing-cars-went-out-of-fashion.html).
@@ -172,28 +93,22 @@ get the full story [here](https://www.nytimes.com/2014/08/12/upshot/heres-why-st
 
 
 
-# %% [markdown]
 ####################################
 # Week 02, Part 2.1:
 ####################################
 
-# %% [markdown]
-"""
+
 # Weekly patterns. 
-Basically, we'll forget about the yearly variation 
-and just count up what happens during each weekday.
-Here's a [Link](https://raw.githubusercontent.com/suneman/socialdata2021/master/files/weekdays.png) of what my version looks like. 
-Some things make sense - for example drunkenness and the weekend. 
-But there are some aspects that were surprising to me. 
-Check out prostitution and mid-week behavior, for example!?
-"""
+# Basically, we'll forget about the yearly variation 
+# and just count up what happens during each weekday.
+# Here's a [Link](https://raw.githubusercontent.com/suneman/socialdata2021/master/files/weekdays.png) of what my version looks like. 
+# Some things make sense - for example drunkenness and the weekend. 
+# But there are some aspects that were surprising to me. 
+# Check out prostitution and mid-week behavior, for example!?
 
 
 
-# %% [markdown]
-"""
-**Example: WEAPON LAWS**
-"""
+"""Example: WEAPON LAWS**"""
 # %%
 (
 data.groupby(['Category','DayOfWeek'])['PdId'].count() 
@@ -203,26 +118,14 @@ data.groupby(['Category','DayOfWeek'])['PdId'].count()
 
 
 
-# %% [markdown]
-"""
-**First** Transfer 'DayOfWeek' from Categorical to ordered Categorical variable 
-"""
-# %%
+""" **First** Transfer 'DayOfWeek' from Categorical to ordered Categorical variable """
 cats = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 data['DayOfWeek'] = pd.Categorical(data['DayOfWeek'], categories=cats, ordered=True)
 
-# %% [markdown]
-"""
-**Then** order the focuscrimes_lst to match the given figures order
-"""
-# %%
+""" **Then** order the focuscrimes_lst to match the given figures order """
 focuscrimes_lst.sort()
 
-# %% [markdown]
-"""
-**Finally** start plotting 
-"""
-# %%
+""" **Finally** start plotting """
 fig, axs = plt.subplots(7, 2,figsize=(15, 20), sharex=True)
 fig.suptitle('Development of Focus Crimes over Days of the week', fontsize=20)
 group_count = data.groupby(['Category','DayOfWeek'])['PdId'].count()
@@ -231,37 +134,22 @@ for i,ax in enumerate(axs.flat):
     group_count[focuscrimes_lst[i]].plot(kind='bar',ax=ax, color= 'tab:gray')
 
 
-
-# %% [markdown]
-"""
 # Development of Focus Crimes over Months
-We can also check if some months
-are worse by counting up number
-of crimes in Jan, Feb, ..., Dec. 
-Did you see any surprises there?
-"""
-# %% [markdown]
-"""
-**First** Add a Month column to data 
-"""
-# %%
+# We can also check if some months
+# are worse by counting up number
+# of crimes in Jan, Feb, ..., Dec. 
+# Did you see any surprises there?
+
+""" **First** Add a Month column to data """
 data['Month_Numeric'] = pd.to_datetime(data['Date']).dt.month
 
-# %% [markdown]
-"""
-**Then** Transfer 'Month_Numeric' to ordered Categorical variable 
-"""
-# %%
+""" **Then** Transfer 'Month_Numeric' to ordered Categorical variable """
 import calendar
 data['Month'] = data['Month_Numeric'].apply(lambda x: calendar.month_abbr[x])
 cats = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',  'Jul', 'Aug', 'Sep', 'Oct', 'Nov','Dec',]
 data['Month'] = pd.Categorical(data['Month'], categories=cats, ordered=True)
 
-# %%[markdown]
-"""
-**Finally** start plotting: 
-"""
-# %%
+""" **Finally** start plotting: """
 fig, axs = plt.subplots(7, 2,figsize=(15, 20), sharex=True)
 fig.suptitle('Development of Focus Crimes over Months', fontsize=20)
 group_count = data.groupby(['Category','Month'])['PdId'].count()
@@ -270,35 +158,28 @@ for i,ax in enumerate(axs.flat):
     group_count[focuscrimes_lst[i]].plot(kind='bar',ax=ax, color= 'tab:gray')
     
 
-# %%[markdown]
+# check if some months are worse.  
 """
-### check if some months are worse.  
-write here  
-write here  
-write here  
-write here  
-"""
-# %%[MarkDown]
-"""
-### Did you see any surprises there?
 write here  
 write here  
 write here  
 write here  
 """
 
-
-
-# %%[markdown]
+# Did you see any surprises there?
 """
+write here  
+write here  
+write here  
+write here  
+"""
+
 # The 24 hour cycle.
-We'll can also forget about weekday and simply count up
-the number of each crime-type that occurs 
-in the entire dataset from midnight to 1am,
-1am - 2am ... and so on. 
-"""
+# We'll can also forget about weekday and simply count up
+# the number of each crime-type that occurs 
+# in the entire dataset from midnight to 1am,
+# 1am - 2am ... and so on. 
 
-# %%
 data['Hour'] = pd.to_datetime(data['Time']).dt.hour
 data['Hour'] = data['Hour'].apply(lambda x: str(x)+"-"+str(x+1))
 cats = ['0-1','1-2','2-3','3-4','4-5','5-6','6-7','7-8','8-9','9-10','10-11','11-12','12-13',
@@ -312,33 +193,24 @@ for i,ax in enumerate(axs.flat):
     ax.set(title=focuscrimes_lst[i])
     group_count[focuscrimes_lst[i]].plot(kind='bar',ax=ax, color= 'tab:gray')
     
-
-# %%[MarkDown]
+# Give me a couple of comments on what you see
 """
-### Give me a couple of comments on what you see
 write here  
 write here  
 write here  
 write here  
 """
 
-
-
-# %%[markdown]
-"""
 # Hours of the week.
-But by looking at just 24 hours,
-we may be missing some important
-trends that can be modulated by week-day,
-so let's also check out the 168 hours of the week.
-So let's see the number of each crime-type
-Monday night from midninght to 1am,
-Monday night from 1am-2am -
-all the way to Sunday night from 11pm to midnight
-"""
+# But by looking at just 24 hours,
+# we may be missing some important
+# trends that can be modulated by week-day,
+# so let's also check out the 168 hours of the week.
+# So let's see the number of each crime-type
+# Monday night from midninght to 1am,
+# Monday night from 1am-2am -
+# all the way to Sunday night from 11pm to midnight
 
-
-# %%
 def day_to_num(x):
     if(x=='Monday'): return 1
     elif(x=='Tuesday'): return 2
@@ -356,22 +228,14 @@ d_v   = data['DayOfWeek_Numeric'].values
 data['HourOfWeek'] =  (h_v + ((d_v-1)*24) )
 
 
-# %%[markdown]
-"""
-### Example:
-"""
-# %%
+""" Example:"""
 (
 data.groupby(['Category','HourOfWeek'])['PdId'].count()
 ['WEAPON LAWS']
 .plot(figsize=(5,5))
 )
 
-# %%
-# %%[markdown]
-"""
 # Hours of the week.
-"""
 # %%
 fig, axs = plt.subplots(7, 2,figsize=(15, 20), sharex=True)
 fig.suptitle('Development of Focus Crimes over Week hours', fontsize=20)
@@ -379,13 +243,6 @@ group_count = data.groupby(['Category','HourOfWeek'])['PdId'].count()
 for i,ax in enumerate(axs.flat):
     ax.set(title=focuscrimes_lst[i])
     group_count[focuscrimes_lst[i]].plot(ax=ax)
-
-
-
-
-
-
-
 
 
 # %% [markdown]
@@ -616,4 +473,74 @@ plt.ylabel("Number of Observations")
 plt.show()                                                       
 
 
+
+
+####################################
+# Week 04 part 01
+####################################
+
+"""
+see more here: https://www.kaggle.com/daveianhickey/how-to-folium-for-maps-heatmaps-time-data
+"""
+
+
+# > First start by plotting a map of San Francisco with a nice tight zoom.
+#  Simply use the command `folium.Map([lat, lon], zoom_start=13)`,
+#  where you'll have to look up San Francisco's longitude and latitude.
+
+""" Create New Map Instance"""
+mapSF1 = folium.Map(
+    location = [37.7749, -122.4194],
+    tiles = 'Stamen Toner',
+    zoom_start = 13)
+# Display Map
+mapSF1
+
+
+
+# > Next, use the the coordinates for SF City Hall `37.77919, -122.41914`
+#  to indicate its location on the map with a nice, pop-up enabled maker.
+#  (In the screenshot below, I used the black & white Stamen tiles, because they look cool).
+#  ![example](https://raw.githubusercontent.com/suneman/socialdataanalysis2020/master/files/city_hall_2020.png)
+
+""" Add Marker for the City Hall to Map"""
+folium.Marker([37.77919, -122.41914],
+              popup='City Hall',
+              icon=folium.Icon( color='blue',
+                                icon='university',
+                                prefix='fa')).add_to(mapSF1)
+""" Display Map"""
+mapSF1
+
+
+
+
+# > Now, let's plot some more data (no need for popups this time). Select a couple of months of data for `'DRUG/NARCOTIC'` and draw a little dot for each arrest for those two months. You could, for example, choose June-July 2016, but you can choose anything you like - the main concern is to not have too many points as this uses a lot of memory and makes Folium behave non-optimally.
+#  We can call this a kind of visualization a *point scatter plot*.
+
+""" INPUT VARIABLES """
+crime = 'DRUG/NARCOTIC'     # pick a crime category 
+start_date = '2016-06-01'   # format: yyyy-mm-dd
+end_date = '2016-07-01'     # format: yyyy-mm-dd
+
+""" Create a filtered dataframe based on new preferences """ 
+Data['Date'] = pd.to_datetime(Data['Date'])
+DataMap = Data[(Data['Date'] >= start_date) &
+               (Data['Date'] < end_date) &
+               (Data['Category']==crime)]
+
+""" Create New Map instance """
+mapSF2 = folium.Map(
+    location = [37.7749, -122.4194],
+    tiles = 'Stamen Toner',
+    zoom_start = 12)
+
+""" Add Makers to the map (based on preferences from above) """
+for i, row in DataMap.iterrows():
+    folium.CircleMarker([row['Y'], row['X']],
+                        radius=1,
+                        popup=row['Date'].date(),
+                        color='red').add_to(mapSF2)
+""" Display Map """ 
+mapSF2
 

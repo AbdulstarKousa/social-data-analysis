@@ -142,8 +142,3 @@ open_in_chrome('yiU56codNlI')
   The difference is particularly useful when the data distribution is multimodal (more than one peak).
 """
 
-###################################################
-# Part 3: Finally! Let's create some visualizations
-###################################################
-
-# See CrimeProblem.py
