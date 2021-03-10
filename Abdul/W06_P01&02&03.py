@@ -305,6 +305,7 @@ MapData_X = MapData_X_y_downsampled[['Y','X']].values
 MapData_y = MapData_X_y_downsampled['Category'].values
 
 """ A random permutation, to split the data randomly """
+np.random.seed(123)  # To fix random seed 
 indices = np.random.permutation(len(MapData_y))
 
 """ Split balanced data in 2/3 train and 1/3 test data """
@@ -335,22 +336,25 @@ for i,k in enumerate([5,10,30]):
         
         """ plot according to the class """
         if (prd== 'DRUG/NARCOTIC'):
-            folium.CircleMarker([float(x) for x in g],
+            folium.CircleMarker(g,
                                 radius=1,
                                 popup='DRUG/NARCOTIC',
-                                color='blue').add_to(Maps[i])
+                                color='blue',
+                                opacity=0.5).add_to(Maps[i])
 
         elif (prd== 'PROSTITUTION'):
-            folium.CircleMarker([float(x) for x in g],
+            folium.CircleMarker(g,
                                 radius=1,
                                 popup='PROSTITUTION',
-                                color='red').add_to(Maps[i])
+                                color='red',
+                                opacity=0.5).add_to(Maps[i])
 
         else :
-            folium.CircleMarker([float(x) for x in g],
+            folium.CircleMarker(g,
                                 radius=1,
                                 popup='DRIVING UNDER THE INFLUENCE',
-                                color='yellow').add_to(Maps[i])
+                                color='yellow',
+                                opacity=0.5).add_to(Maps[i])
 
 """ display maps """
 # Map k = 5
@@ -374,6 +378,3 @@ This is due to the fact that in the balanced data as k increases
 the minority classes emphasize more in favor of the majority class 
 as expected!
 """
-    
-
-
