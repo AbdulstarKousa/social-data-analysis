@@ -107,6 +107,8 @@ close doesn’t mean very much"
 # This will give you an idea of how the varioius crimes are distributed across the city.
 
 from quick_init import *
+from IPython.display import display
+
 
 """ load map data """
 MapData = data[data['Category'].isin(['PROSTITUTION', 'DRUG/NARCOTIC', 'DRIVING UNDER THE INFLUENCE' ])]
@@ -144,8 +146,7 @@ for _, row in MapData.iterrows():
                     color='yellow').add_to(MapSF)
 
 """ Display Map Results: """
-MapSF
-
+display(MapSF)
 
 
 # Next, it's time to set up your model based on the actual data. 
@@ -352,14 +353,15 @@ for i,k in enumerate([5,10,30]):
                                 popup='DRIVING UNDER THE INFLUENCE',
                                 color='yellow').add_to(Maps[i])
 
-""" display the map """
-Maps[0] # k = 5
-Maps[1] # k = 10
-Maps[2] # k = 30
+""" display maps """
+# Map k = 5
+display(Maps[0])
 
+# Map K = 10
+display(Maps[1]) 
 
-
-
+# Map k = 30
+display(Maps[2])
 
 # Describe what happens to the map as you increase the number of neighbors, K.
 """ calculate accuracy """
