@@ -16,7 +16,7 @@ sns.set()
 
 import folium
 import calendar
-
+import os 
 
 
 # Load Data
@@ -24,7 +24,6 @@ import calendar
 fileName = 'Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv'
 filePath = os.path.abspath(os.path.join(os.getcwd(), '..' ,'Datasets', fileName))
 Data = pd.read_csv(filePath)
-
 Data['Year'] = pd.to_datetime(Data['Date']).dt.year
 Data = Data[Data['Year'] != 2018]
 
