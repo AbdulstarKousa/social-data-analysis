@@ -203,8 +203,7 @@ Class Imbalance:
     In other words, if a model always predict, for a new random points, 
     the class with most examples, this model will have somehow high accuracy!
     Not because this model is good but rather due class imbalance.
-    a suggestion where to choose k=1 in this situation. 
-    However, below we choose k = 3 to elaborate on this problem. 
+    a suggestion where to choose k=1 in this situation.  
     [ref: https://www.quora.com/Why-does-knn-get-effected-by-the-class-imbalance]
     
 """
@@ -219,7 +218,7 @@ see link: https://elitedatascience.com/imbalanced-classes
 
 """ Separate majority and minority classes """
 MapData_X_y = MapData[['Category','Y','X']]
-MapData_X_y_majority = MapData_X_y[MapData_X_y['Category']=='DRUG/NARCOTIC']
+MapData_X_y_majority   = MapData_X_y[MapData_X_y['Category']=='DRUG/NARCOTIC']
 MapData_X_y_minority_1 = MapData_X_y[MapData_X_y['Category']=='PROSTITUTION']
 MapData_X_y_minority_2 = MapData_X_y[MapData_X_y['Category']=='DRIVING UNDER THE INFLUENCE']
  
