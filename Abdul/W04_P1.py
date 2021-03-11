@@ -3,5 +3,5 @@
 ####################################
 
 import folium
-# see more here: 
+# Git an overview about folium here: 
 # https://www.kaggle.com/daveianhickey/how-to-folium-for-maps-heatmaps-time-data
