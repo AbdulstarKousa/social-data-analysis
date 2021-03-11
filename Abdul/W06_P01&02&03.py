@@ -104,7 +104,7 @@ close doesn’t mean very much"
 # so we focus on those crime types since they will make the most sense a KNN - map.
 
 # Begin by using folium (see Week4) to plot all incidents of the three crime types on their own map. 
-# This will give you an idea of how the varioius crimes are distributed across the city.
+# This will give you an idea of how the various crimes are distributed across the city.
 
 from quick_init import *
 from IPython.display import display
@@ -181,7 +181,7 @@ accuracy_score(knn.predict(MapData_X_test), MapData_y_test)
 
 
 
-# You don't have to think a lot about testing/trainig and accuracy 
+# You don't have to think a lot about testing/training and accuracy 
 # for this exercise. 
 # We're mostly interested in creating a map 
 # that's not too problematic. 
@@ -239,7 +239,7 @@ MapData_X_y_minority_1 = resample(MapData_X_y_minority_1,
 MapData_X_y_downsampled = pd.concat([MapData_X_y_majority, MapData_X_y_minority_1, MapData_X_y_minority_2])
 
 """ Shuffle DataFrame rows """
-MapData_X_y_downsampled.sample(frac=1).reset_index(drop=True)
+MapData_X_y_downsampled.sample(frac=1,random_state=123).reset_index(drop=True)
 
 """ Check and Display new class counts """
 MapData_X_y_downsampled['Category'].value_counts()
