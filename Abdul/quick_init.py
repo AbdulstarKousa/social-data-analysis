@@ -31,4 +31,4 @@ Data = Data[Data['Year'] != 2018]
 focuscrimes = set(['WEAPON LAWS', 'PROSTITUTION', 'DRIVING UNDER THE INFLUENCE', 'ROBBERY', 'BURGLARY', 'ASSAULT', 'DRUNKENNESS', 'DRUG/NARCOTIC', 'TRESPASS', 'LARCENY/THEFT', 'VANDALISM', 'VEHICLE THEFT', 'STOLEN PROPERTY', 'DISORDERLY CONDUCT'])
 focuscrimes_lst = list(focuscrimes)
 focuscrimes_lst.sort()
-data = Data[Data['Category'].isin(focuscrimes_lst)]
+data = Data[Data['Category'].isin(focuscrimes_lst)].copy()
