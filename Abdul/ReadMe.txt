@@ -1,5 +1,10 @@
 - Each week contains Abduls' work of that week except for the work related to the crime data-set. 
-- The work of the crime data-set can be found in the script called "CrimeProblem.py" and week 06 part 03 .
+- The work of the crime data-set can be found in the scripts: 
+	- "CrimeProblem.py" 
+	- "W06_P01&02&03" part 03
+	- "W07_P2.py" 
+	- "W07_P3_V0.py"
+	- "W07_P3_V1.py""
 
 - Notes: 
 	- To find the weekly exercises consider navigating to the course homepage at the following link:
