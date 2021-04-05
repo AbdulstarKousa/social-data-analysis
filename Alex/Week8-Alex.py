@@ -11,6 +11,8 @@ from bokeh.models import FactorRange #@to-do: need to look into it
 from bokeh.plotting import figure # to start a figure inctace 
 from bokeh.io import show # to show bokeh figures 
 from bokeh.io import output_notebook # to run the output in the notebook not html page
+from bokeh.palettes import Category20
+from bokeh.models import Legend
 output_notebook() # set notebook output active
     
 
@@ -46,11 +48,15 @@ plt_data['hour'] = plt_data.index + 1
 
 source = ColumnDataSource(plt_data) # trans to bokeh data
 x = [str(i) for i in plt_data.index] # trans the x's to string (x_range expect list of strings)
-p = figure(x_range = FactorRange(factors=x)) #@to-do: need to look into it, more arguments needed 
+
+p = figure(plot_width=800,
+           x_range=FactorRange(factors=x),
+           toolbar_location=None,
+           title='Crimes per Hour')
 
 bar ={} # to store vbars
 for i,crime in enumerate(focuscrimes_lst): # start a loop to make vbars:
-    bar[crime] = p.vbar(x='Hour',  
+    bar[crime] = p.vbar(x='hour',  
                     top=crime, 
                     width=0.9,   
                     source= source) # figure.vbar : to make vertical bars
