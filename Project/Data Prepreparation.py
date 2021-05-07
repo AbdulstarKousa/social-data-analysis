@@ -132,9 +132,7 @@ Data = Data[Data['Year']!=2021]
 """ Drop rows from 2012 since they are not completed  """
 Data = Data[Data['Year']!=2012]
 
-Data['CRASH DATE'] = pd.to_datetime(Data['CRASH DATE']).dt.date
-
-Data
+Data['DATE'] = pd.to_datetime(Data['CRASH DATE']).dt.date
 
 #Introducing weather data
 
@@ -143,4 +141,10 @@ filePath2 = os.path.abspath(os.path.join(os.getcwd(), fileName2))
 
 weather =  pd.read_csv(filePath2)
 
-weather
+weather.drop(['STATION', 'NAME'], axis=1, inplace=True)
+weather['DATE'] = pd.to_datetime(weather['DATE']).dt.date
+weather = weather.fillna(0)
+
+Final_data = pd.merge(Data, weather, on='DATE', how='left')
+Final_data.drop(['DATE'], axis=1, inplace=True)
+Final_data.to_csv('dataset_with_weather.csv')
