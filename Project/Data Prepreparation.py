@@ -3,13 +3,13 @@ from IPython.display import display
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-    # Data Handling
+# Data Handling
 import numpy as np 
 import pandas as pd 
 import calendar
 import os 
 
-    # Plot
+# Plot
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
