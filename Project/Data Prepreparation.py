@@ -96,6 +96,7 @@ Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].replace(mappings)
 Data = Data[Data['VEHICLE TYPE CODE 1'].isin(vehicle_types)]
 # Data.groupby(['VEHICLE TYPE CODE 2'])['VEHICLE TYPE CODE 2'].count().sort_values(ascending=False).head(60)
 
+vehicle_types
 
 """ Classify Contributing Factor type """
 Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].str.lower()
@@ -141,10 +142,45 @@ filePath2 = os.path.abspath(os.path.join(os.getcwd(), fileName2))
 
 weather =  pd.read_csv(filePath2)
 
+""" https://www.ncdc.noaa.gov/cdo-web/search """
 weather.drop(['STATION', 'NAME'], axis=1, inplace=True)
 weather['DATE'] = pd.to_datetime(weather['DATE']).dt.date
 weather = weather.fillna(0)
 
 Final_data = pd.merge(Data, weather, on='DATE', how='left')
 Final_data.drop(['DATE'], axis=1, inplace=True)
-Final_data.to_csv('dataset_with_weather.csv')
+#Final_data.to_csv('dataset_with_weather.csv')
+
+
+"""https://data.cityofnewyork.us/Transportation/VZV_Speed-Limits/7n5j-865y"""
+
+fileName3 = 'dot_VZV_Speed_Limits_20210507.csv'
+filePath3 = os.path.abspath(os.path.join(os.getcwd(), fileName3))
+speed_limits =  pd.read_csv(filePath3)
+
+speed_limits = speed_limits.drop_duplicates()
+speed_limits = speed_limits.drop_duplicates(subset=['street'])
+speed_limits.rename(columns={'street': 'ON STREET NAME'}, inplace=True)
+speed_limits = speed_limits[['ON STREET NAME', 'postvz_sl']]
+#speed_limits = speed_limits.loc[(speed_limits['postvz_sl']>0)]
+#speed_limits['postvz_sl'].value_counts()
+#speed_limits['ON STREET NAME'] = speed_limits['ON STREET NAME'].str.encode('utf-8')
+Final_data['ON STREET NAME'] = Final_data['ON STREET NAME'].str.strip()
+
+# speed_limits['ON STREET NAME'] = speed_limits['ON STREET NAME'].str.encode('utf-8')
+# Final_data['ON STREET NAME'] = Final_data['ON STREET NAME'].str.encode('utf-8')
+
+# type(Final_data['ON STREET NAME'][0])
+# type(speed_limits['ON STREET NAME'][0])
+
+
+# Final_data['ON STREET NAME'] = Final_data['ON STREET NAME'].str.strip()
+# Final_data['ON STREET NAME'].apply(str).str.strip()
+# speed_limits.loc[speed_limits['ON STREET NAME'] == 'INDEPENDENCE AVENUE']
+
+Final_data['ON STREET NAME'].isin(speed_limits['ON STREET NAME']).value_counts()
+#speed_limits.set_index(['ON STREET NAME'], inplace=True)
+#speed_limits['ON STREET NAME']
+Final_final_data = pd.merge(speed_limits, Final_data, on=['ON STREET NAME'])
+
+Final_final_data.to_csv('collision_weather_limits.csv')
