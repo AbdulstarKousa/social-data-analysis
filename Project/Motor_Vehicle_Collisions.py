@@ -112,29 +112,127 @@ Data = Data.dropna()
 Data = Data[(Data['LATITUDE']!=0)|(Data['LONGITUDE']!=0)]
 
 
-# Prepare Categorical features: Vehicle type, Contributing Factor and Zip Features
-""" Classify Vehicle type """
+# Prepare Vehicle types
+""" Unify Vehicle types string """
 Data['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].str.lower()
 Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].str.lower()
 Data['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].str.strip()
 Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].str.strip()
-"""
-More work to be done later, see draft.
-    Data.groupby(['VEHICLE TYPE CODE 1'])['VEHICLE TYPE CODE 1'].count().sort_values(ascending=False).head(60)
-    Data.groupby(['VEHICLE TYPE CODE 2'])['VEHICLE TYPE CODE 2'].count().sort_values(ascending=False).head(60)
-"""
 
-""" Classify Contributing Factor type """
+""" Drop Unspecified Vehicle Types """
+Data = Data [Data['VEHICLE TYPE CODE 1'] != 'other']
+Data = Data [Data['VEHICLE TYPE CODE 2'] != 'other']
+Data = Data [Data['VEHICLE TYPE CODE 1'] != 'unknown']
+Data = Data [Data['VEHICLE TYPE CODE 2'] != 'unknown']
+
+""" Consider only most frequent Vehicle Types (covers more than 90 % of occurrences) """
+VT1 = pd.DataFrame()
+VT1['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).keys()
+VT1['Frequencies'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).values
+VT1['Frequencies'][0:8].sum()  
+VT1['VEHICLE TYPE CODE 1'][0:8].values
+
+Data['VEHICLE TYPE CODE 1'].replace(to_replace='station wagon/sport utility vehicle', value='sport utility vehicle', inplace=True)
+Data['VEHICLE TYPE CODE 1'].replace(to_replace='sport utility / station wagon', value='sport utility vehicle', inplace=True)
+
+VT1 = pd.DataFrame()
+VT1['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).keys()
+VT1['Frequencies'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).values
+VT1['Frequencies'][0:7].sum()  
+VT1_Names = VT1['VEHICLE TYPE CODE 1'][0:7].values
+
+VT2 = pd.DataFrame()
+VT2['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).keys()
+VT2['Frequencies'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).values
+VT2['Frequencies'][0:10].sum()  
+VT2['VEHICLE TYPE CODE 2'][0:10].values  
+
+Data['VEHICLE TYPE CODE 2'].replace(to_replace='station wagon/sport utility vehicle', value='sport utility vehicle', inplace=True)
+Data['VEHICLE TYPE CODE 2'].replace(to_replace='sport utility / station wagon', value='sport utility vehicle', inplace=True)
+Data['VEHICLE TYPE CODE 2'].replace(to_replace='bike', value='bicycle', inplace=True)
+Data['VEHICLE TYPE CODE 2'].replace(to_replace='4 dr sedan', value='sedan', inplace=True)
+
+VT2 = pd.DataFrame()
+VT2['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).keys()
+VT2['Frequencies'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).values
+VT2['Frequencies'][0:7].sum()  
+VT2_Names = VT2['VEHICLE TYPE CODE 2'][0:7].values  
+
+""" Slice Data: Vehicle Types in Focus_Vehicle_Types (covers more than 90 % of the occurrences)"""
+Focus_Vehicle_Types = list(set(list(VT1_Names) + list(VT2_Names)))
+Data = Data[Data['VEHICLE TYPE CODE 1'].isin((Focus_Vehicle_Types)) & (Data['VEHICLE TYPE CODE 2'].isin(Focus_Vehicle_Types))].copy()
+
+""" free memory """
+del(VT1,VT2)
+
+
+# Prepare Contributing Factor
+""" Unify Contributing Factor string """
 Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].str.lower()
 Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].str.lower()
-"""
-More work to be done later, see draft. 
-"""
+Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].str.strip()
+Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].str.strip()
 
-""" Zip Feature """
-"""
-More work to be done later, see draft. 
-"""
+""" Drop Unspecified Contributing Factor """
+Data = Data [Data['CONTRIBUTING FACTOR VEHICLE 1'] != 'unspecified']
+Data = Data [Data['CONTRIBUTING FACTOR VEHICLE 2'] != 'unspecified']
+
+""" Consider only most frequent Contributing Factor (covers more than 90 % of occurrences) """
+CF1 = pd.DataFrame()
+CF1['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).keys()
+CF1['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).values
+CF1['Frequencies'][0:17].sum()  
+CF1['CONTRIBUTING FACTOR VEHICLE 1'][0:17].values
+
+
+Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='following too closely', value='following/passing too closely', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='passing too closely', value='following/passing too closely', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='passing or lane usage improper', value='unsafe lane changing/usage', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='unsafe lane changing', value='unsafe lane changing/usage', inplace=True)
+
+
+CF1 = pd.DataFrame()
+CF1['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).keys()
+CF1['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).values
+CF1['Frequencies'][0:15].sum()  
+CF1_Names = CF1['CONTRIBUTING FACTOR VEHICLE 1'][0:15].values
+
+
+CF2 = pd.DataFrame()
+CF2['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).keys()
+CF2['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).values
+CF2['Frequencies'][0:16].sum()  
+CF2['CONTRIBUTING FACTOR VEHICLE 2'][0:16].values
+
+Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='following too closely', value='following/passing too closely', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='passing too closely', value='following/passing too closely', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='passing or lane usage improper', value='unsafe lane changing/usage', inplace=True)
+Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='unsafe lane changing', value='unsafe lane changing/usage', inplace=True)
+
+CF2 = pd.DataFrame()
+CF2['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).keys()
+CF2['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).values
+CF2['Frequencies'][0:14].sum()  
+CF2_Names = CF2['CONTRIBUTING FACTOR VEHICLE 2'][0:14].values
+
+
+""" Slice Data: Contributing Factor in Focus_Contributing_Factor_Types (covers more than 90 % of the occurrences)"""
+Focus_Contributing_Factor_Types = list(set(list(CF1_Names) + list(CF2_Names)))
+Data = Data[Data['CONTRIBUTING FACTOR VEHICLE 2'].isin((Focus_Contributing_Factor_Types)) & (Data['CONTRIBUTING FACTOR VEHICLE 2'].isin(Focus_Contributing_Factor_Types))]
+
+""" free memory """
+del(CF1,CF2)
+
+
+
+# Prepare Zip Features
+""" Drop Unspecified Zip """
+Data['ZIP CODE'].replace(to_replace='     ', value=np.nan, inplace=True)
+Data = Data.dropna()
+
+""" Change the Zip type to float64 """ 
+Data['ZIP CODE'] = pd.to_numeric(Data['ZIP CODE']) 
+
 
 # Adding new feutres:
 """ Add the 'Respone' feature, which is a binary future that says 0 if there is no injures or killed person and 1 other wise. """
@@ -192,7 +290,7 @@ for street in streets:
     Street_Speed_Mode[street]= Street_Mode
 
 """ Add speed limits mode to Data """
-Data = Data[Data['ON STREET NAME'].isin(streets)]
+Data = Data[Data['ON STREET NAME'].isin(streets)].copy()
 Data['SPEED LIMIT MODE'] = Data['ON STREET NAME'].apply(lambda street: Street_Speed_Mode[street])
 
 """ Free memory """
@@ -330,21 +428,6 @@ Data.columns
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ======================= Data Exploration:
 # Summary Statistics:
 """ for object features """
@@ -363,7 +446,7 @@ set_option('precision', 2)
 display(Desc_N)
 
 
-# Some intressteing counts:
+# Some interesting counts:
 """ Number of MVC injured persons 2013 - 2020 """
 Data['NUMBER OF PERSONS INJURED'].sum()
 
@@ -424,8 +507,8 @@ fig.colorbar(cax)
 ticks = np.arange(0,len(Data.select_dtypes(exclude=object).columns),1)
 ax.set_xticks(ticks)
 ax.set_yticks(ticks)
-ax.set_xticklabels(['LAT.', 'LONG.', 'Injured.','killed', 'Response', 'Year', 'Month', 'Hour','Minute'], rotation=90)
-ax.set_yticklabels(['LAT.', 'LONG.', 'Injured.','killed', 'Response', 'Year', 'Month', 'Hour','Minute'], rotation=0)
+ax.set_xticklabels(['Zip','LAT.', 'LONG.', 'Injured','killed', 'Response', 'Year', 'Month', 'Hour','Minute','S.L.M.', 'PRE.','S.F.','S.D.','F.S.H','A.W.S.','MAX.T.','MIN.T.'], rotation=90)
+ax.set_yticklabels(['Zip','LAT.', 'LONG.', 'Injured','killed', 'Response', 'Year', 'Month', 'Hour','Minute','S.L.M.', 'PRE.','S.F.','S.D.','F.S.H','A.W.S.','MAX.T.','MIN.T.'], rotation=0)
 plt.grid(False)
 plt.title('Correlation Matrix')
 plt.show()
@@ -547,4 +630,101 @@ for i, row in data_Map.iterrows():
 """ Display Map"""
 display(MapNYC)
 
+
+
+
+# # ======== Bokeh:
+
+# # Load Libraries:
+# from bokeh.io import show
+# from bokeh.io import output_notebook
+# output_notebook() # open the bokeh viz on the notebook.
+# from bokeh.models import ColumnDataSource
+# from bokeh.models import FactorRange
+# from bokeh.models import Legend
+# from bokeh.plotting import figure
+# from bokeh import palettes
+
+# # Slice Data: [2010 - 2018[ in focus crimes
+# focuscrimes = set(['WEAPON LAWS', 'PROSTITUTION', 'DRIVING UNDER THE INFLUENCE', 'ROBBERY', 'BURGLARY', 'ASSAULT', 'DRUNKENNESS', 'DRUG/NARCOTIC', 'TRESPASS', 'LARCENY/THEFT', 'VANDALISM', 'VEHICLE THEFT', 'STOLEN PROPERTY', 'DISORDERLY CONDUCT'])
+# focuscrimes_lst = list(focuscrimes)
+# Data['Year'] = pd.to_datetime(Data['Date']).dt.year
+# Data = Data[(Data['Year']>=2010) & (Data['Year']<2018)]
+# Data = Data[Data['Category'].isin(focuscrimes_lst)]
+
+# # Pivot Data (Table) for Bokeh:
+# Data['Hour'] = pd.to_datetime(Data['Time']).dt.hour
+# Table = pd.pivot_table(Data, 
+#                     index = "Hour", 
+#                     columns = "Category",
+#                     values = 'PdId',
+#                     aggfunc = 'count')
+
+
+# # Normalize: (div by sum)
+# Table = Table.div(Table.sum(axis=0), axis=1)
+
+# # Add Hour column (We need Hour it for Bokeh)
+# Table['Hours']=Table.index
+
+# # Convert data to bokeh data 
+# source = ColumnDataSource(Table)
+
+# # Create an Empty Bokeh Figure.
+# """ first, define x_range. It should be FactorRange of str(x_axis_values) """
+# x_range = list(map(str, Table['Hours'].values))  
+# x_range = FactorRange(factors=x_range)
+
+# """ then, create the figure """
+# p = figure(x_range = x_range, 
+#         plot_height=400,
+#         plot_width=800,
+#         title='Hourly Crimes Distribution',
+#         x_axis_label='Hour', 
+#         y_axis_label='Frequency'
+#         )
+
+
+# # Loop to create a barplot for each crime: 
+# """ first, Define colors (one color for each crime): """
+# colors = palettes.Category20[len(focuscrimes_lst)]
+
+# """ then,
+# Define an empty list to store legend items. 
+# The list contains tuples of Crime and the corresponding barplot list. 
+# Syntax:[(crime, [p.vbar]), ....]   
+# This will be used later to extract legends using Legend function.
+# """
+# legend_items = []
+
+# """ start looping """
+# for i, crime in enumerate(focuscrimes_lst):
+#     """ 
+#     p.vbar is a barplot of hour vs fraction. 
+#     For para see https://docs.bokeh.org/en/latest/docs/reference/plotting.html#bokeh.plotting.Figure.vbar  
+#     """
+#     vertical_bars  = p.vbar(x='Hours',  # x_axis (column name from Table), see Table['Hours']  
+#                     top=crime,          # y_axis (column name from Table), see Table['DRUG/NARCOTIC']
+#                     source=source,      # Table in Bokeh format 
+#                     width=0.9,          # width of each bar in vbar 
+#                     color=colors[i],    # color each crime from the colors list
+#                     muted=True,         # Start the plot muted 
+#                     muted_alpha=0.005,  # Shadow of each barplot 
+#                     fill_alpha=1,       # how much to fill each bar in the barplot 
+#                     line_alpha=1)       # how much to fill the border of each bar in the barplot
+#     legend_items.append((crime, [vertical_bars])) # store to legend_items list
+    
+
+# # Start the interactive figure p
+# """ First, Extract legends, legends has the crime name and info from the cor. barplot's info """
+# legend = Legend(items=legend_items)
+
+# """ Then, define legends' Place. """
+# p.add_layout(legend, 'left')
+
+# """ Define the click policy """
+# p.legend.click_policy = 'mute'
+
+# """ show """
+# show(p)
 
