@@ -5,6 +5,19 @@ https://www.ncdc.noaa.gov/cdo-web/search
 https://data.cityofnewyork.us/Transportation/VZV_Speed-Limits/7n5j-865y
 """
 
+
+# ======================= Important: Main Idea
+"""
+First,
+We make a new column, 'kills_or_injures_occurred', 
+which is a binary future that says 0 if there is no injures or killed person and 1 other wise. 
+
+Then,
+we have a similar task to the one we have been doing with the crime dataset. 
+Where we can use the Tempo-Spatial (+ Weather and Speed-Limit which will be download later) features to predict if there is kills or injures occurred (0 or 1).
+"""
+
+
 # ======================= Load Libraries: 
 """ IPython """
 from IPython.display import display
@@ -25,6 +38,7 @@ sns.set()
 import folium
 
 
+
 # ======================= Load data:
 """ Path """
 fileName = 'Motor_Vehicle_Collisions.csv'
@@ -35,41 +49,45 @@ Data =  pd.read_csv(filePath)
 
 
 
-# ======================= Important: Main Idea
-"""
-First,
-We make a new column, 'kills_or_injures_occurred', 
-which is a binary future that says 0 if there is no injures or killed person and 1 other wise. 
+# ======================= Functions:
+""" Define a function to track Reduction in data """
+Reduction = {}
+Reduction_Percentage = {}
+N = Data.shape[0]
+def reduc(step):
+    global N 
+    global Reduction
+    global Reduction_Percentage
+    N_before = N
+    N_after = Data.shape[0]
+    Reduction[step] = N_after
+    Reduction_Percentage[step] = (N_before - N_after) / N_before
+    print(f'Number of observation: {N_after}  (--{N_before-N_after})')
+    print(f'Reduction: {N_before - N_after}  ({(N_before - N_after) / N_before} %)')
+    N = Data.shape[0]
 
-Then,
-we have a similar task to the one we have been doing with the crime dataset. 
-Where we can use the Tempo-Spatial (+ Weather and Speed-Limit which will be download later) features to predict if there is kills or injures occurred (0 or 1).
-"""
 
 # ======================= Getting to know the Dataset: 
+""" Initilize Reduction in data """
+reduc('Init')
+
 """ Overview """
 Data.head(n=5)
 
 """ Data shape """
 Data.shape
 
-""" Data info """
-Data.info()
+""" Columns' names """
+Data.columns
 
 """ Columns types """
 Data.dtypes
 
-""" Columns' names """
-Data.columns
+""" Count columns' NaN values in desending order """
+sorted(list(zip(Data.columns,Data.isna().sum(axis=0).values)) , key= lambda row: row[1], reverse=True)
 
-""" Count columns' non-NaN values """
-Data.count()
-
-""" Count columns' NaN values """
-Data.isna().sum(axis=0)
-
-""" Return the columns with the must Nan values """
-Data.count().idxmin()
+""" Count columns' Non-NaN values in desending order """
+sorted(list(zip(Data.count().keys(),Data.count().values)), key= lambda row: row[1], reverse=True)
 
 """ Count columns' zeros values """
 (Data == 0).sum(axis=0)
@@ -78,13 +96,13 @@ Data.count().idxmin()
 (Data == '').sum(axis=0)
 
 
-# ======================= Data Prepration (Cleaning and Transformation): 
 
-# Drop unneeded features and observation 
+# ======================= Data Cleaning: 
+# Drop unneeded features:
 """ Drop 'COLLISION_ID' since it's not informative """
 Data = Data.drop(columns=['COLLISION_ID'])
 
-""" Drop 'LOCATION' since 'LATITUDE', 'LONGITUDE' """
+""" Drop 'LOCATION' since we have 'LATITUDE', 'LONGITUDE' """
 Data = Data.drop(columns=['LOCATION'])
 
 """ Drop 'CROSS STREET NAME' and 'OFF STREET NAME' since we have 'ON STREET NAME' """
@@ -105,136 +123,220 @@ Data = Data[
         (Data['VEHICLE TYPE CODE 5'].isna())]
 Data = Data.drop(columns=['CONTRIBUTING FACTOR VEHICLE 3','CONTRIBUTING FACTOR VEHICLE 4','CONTRIBUTING FACTOR VEHICLE 5','VEHICLE TYPE CODE 3', 'VEHICLE TYPE CODE 4', 'VEHICLE TYPE CODE 5'])
 
-""" Drop missing values from the remaning features """
-Data = Data.dropna()
+""" Track Reduction in data """
+reduc('MVC with only two vehicles involves')
+
+
+# Missing Data:
+""" Count columns' NaN values in desending order """
+sorted(list(zip(Data.columns,Data.isna().sum(axis=0).values)) , key= lambda row: row[1], reverse=True)
+
+""" Count columns' zeros values """
+(Data == 0).sum(axis=0)
+
+""" Count columns' empty strings """
+(Data == '').sum(axis=0)
+
+""" Drop rows that has a messing value in one of important features """
+Data = Data[
+    Data['ON STREET NAME'].notna()  & # important feature for adding speed limit data later on.
+    Data['LATITUDE' ].notna()       & # imporatnt feature for map plots 
+    Data['LONGITUDE'].notna()       & # imporatnt feature for map plots
+    Data['NUMBER OF PERSONS INJURED'].notna()   & # imporatnt feature since one of the main features of intress
+    Data['NUMBER OF PERSONS KILLED'].notna()      # imporatnt feature since one of the main features of intress
+    ].copy()
 
 """ Drop raws with LATITUDE or LONGITUDE = 0 """
-Data = Data[(Data['LATITUDE']!=0)|(Data['LONGITUDE']!=0)]
+Data = Data[(Data['LATITUDE']!=0)|(Data['LONGITUDE']!=0)].copy()
+
+""" Track Reduction in data """
+reduc('Drop missing values in important features')
 
 
-# Prepare Vehicle types
-""" Unify Vehicle types string """
+
+
+# ======================= Features Prepration: 
+# ===== Prepare Vehicle types:
+# Prepare Vehicle type 1:
+""" Unify Vehicle type recording way """
 Data['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].str.lower()
-Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].str.lower()
 Data['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].str.strip()
+
+""" Fixing recording issus of Vehicle types that has more than 50 MVC occurrences """
+Frequent_MVC_Vehicles = (Data['VEHICLE TYPE CODE 1'].value_counts().keys()[Data['VEHICLE TYPE CODE 1'].value_counts().values > 50])
+print(Frequent_MVC_Vehicles)
+
+Mapping = {
+    np.nan: 'unknown',
+    'station wagon/sport utility vehicle': 'sport utility vehicle', 
+    'sport utility / station wagon':'sport utility vehicle', 
+    '4 dr sedan': 'sedan', 
+    'ambul': 'ambulance',  
+    'school bus': 'school bus', 
+    'e-sco': 'e-scooter', 
+    'schoo': 'school bus', 
+    'bicycle': 'bike'
+    }
+
+Data['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].replace(Mapping)
+
+""" Consider only 95 % Frequent MVC Vehicle types """
+VT1 = pd.DataFrame()
+VT1['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).keys()
+VT1['Frequencies'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).values
+
+threshold = 0
+for i in range(len(VT1['VEHICLE TYPE CODE 1'].unique())):
+    Sum = VT1['Frequencies'][0:i+1].sum()
+    if Sum > 0.95:
+         threshold = i + 1
+         print("Threshold that covers 95% of " + "VEHICLE TYPEs".lower() +  " = " + f"{threshold}")
+         break 
+Focus_Vehicles_Type_1 = list(VT1['VEHICLE TYPE CODE 1'][0:threshold].values)
+print(Focus_Vehicles_Type_1)
+
+# Prepare Vehicle type 2:
+""" Unify Vehicle type recording way """
+Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].str.lower()
 Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].str.strip()
 
-""" Drop Unspecified Vehicle Types """
-Data = Data [Data['VEHICLE TYPE CODE 1'] != 'other']
-Data = Data [Data['VEHICLE TYPE CODE 2'] != 'other']
-Data = Data [Data['VEHICLE TYPE CODE 1'] != 'unknown']
-Data = Data [Data['VEHICLE TYPE CODE 2'] != 'unknown']
+""" Fixing recording issus of Vehicle types that has more than 50 MVC occurrences """
+Frequent_MVC_Vehicles = (Data['VEHICLE TYPE CODE 2'].value_counts().keys()[Data['VEHICLE TYPE CODE 2'].value_counts().values > 50])
+print(Frequent_MVC_Vehicles)
 
-""" Consider only most frequent Vehicle Types (covers more than 90 % of occurrences) """
-VT1 = pd.DataFrame()
-VT1['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).keys()
-VT1['Frequencies'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).values
-VT1['Frequencies'][0:8].sum()  
-VT1['VEHICLE TYPE CODE 1'][0:8].values
+Mapping = {
+    np.nan: 'unknown',
+    'unkno': 'unknown',
+    'unk': 'unknown',
+    'station wagon/sport utility vehicle': 'sport utility vehicle', 
+    'sport utility / station wagon':'sport utility vehicle', 
+    '4 dr sedan': 'sedan', 
+    'ambul': 'ambulance',  
+    'school bus': 'school bus', 
+    'e-sco': 'e-scooter', 
+    'schoo': 'school bus', 
+    'bicycle': 'bike', 
+    }
 
-Data['VEHICLE TYPE CODE 1'].replace(to_replace='station wagon/sport utility vehicle', value='sport utility vehicle', inplace=True)
-Data['VEHICLE TYPE CODE 1'].replace(to_replace='sport utility / station wagon', value='sport utility vehicle', inplace=True)
+Data['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].replace(Mapping)
 
-VT1 = pd.DataFrame()
-VT1['VEHICLE TYPE CODE 1'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).keys()
-VT1['Frequencies'] = Data['VEHICLE TYPE CODE 1'].value_counts(normalize=True).values
-VT1['Frequencies'][0:7].sum()  
-VT1_Names = VT1['VEHICLE TYPE CODE 1'][0:7].values
-
+""" Consider only 95 % Frequent MVC Vehicle types """
 VT2 = pd.DataFrame()
 VT2['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).keys()
 VT2['Frequencies'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).values
-VT2['Frequencies'][0:10].sum()  
-VT2['VEHICLE TYPE CODE 2'][0:10].values  
 
-Data['VEHICLE TYPE CODE 2'].replace(to_replace='station wagon/sport utility vehicle', value='sport utility vehicle', inplace=True)
-Data['VEHICLE TYPE CODE 2'].replace(to_replace='sport utility / station wagon', value='sport utility vehicle', inplace=True)
-Data['VEHICLE TYPE CODE 2'].replace(to_replace='bike', value='bicycle', inplace=True)
-Data['VEHICLE TYPE CODE 2'].replace(to_replace='4 dr sedan', value='sedan', inplace=True)
+threshold = 0
+for i in range(len(VT2['VEHICLE TYPE CODE 2'].unique())):
+    Sum = VT2['Frequencies'][0:i+1].sum()
+    if Sum > 0.95:
+         threshold = i + 1
+         print("Threshold that cover 95% of " + "VEHICLE TYPEs".lower() +  " = " + f"{threshold}")
+         break 
+Focus_Vehicles_Type_2 = VT2['VEHICLE TYPE CODE 2'][0:threshold].values
+print(Focus_Vehicles_Type_2)
 
-VT2 = pd.DataFrame()
-VT2['VEHICLE TYPE CODE 2'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).keys()
-VT2['Frequencies'] = Data['VEHICLE TYPE CODE 2'].value_counts(normalize=True).values
-VT2['Frequencies'][0:7].sum()  
-VT2_Names = VT2['VEHICLE TYPE CODE 2'][0:7].values  
-
-""" Slice Data: Vehicle Types in Focus_Vehicle_Types (covers more than 90 % of the occurrences)"""
-Focus_Vehicle_Types = list(set(list(VT1_Names) + list(VT2_Names)))
+# Slice Focus Vehicle Types (covers more than 95 % of MVC occurrences)
+""" Slice """
+Focus_Vehicle_Types = list(set(list(Focus_Vehicles_Type_1) + list(Focus_Vehicles_Type_2))) 
 Data = Data[Data['VEHICLE TYPE CODE 1'].isin((Focus_Vehicle_Types)) & (Data['VEHICLE TYPE CODE 2'].isin(Focus_Vehicle_Types))].copy()
+print(Focus_Vehicle_Types)
+
+""" Track Reduction in data """
+reduc('Slice Focus Vehicle Types')
 
 """ free memory """
 del(VT1,VT2)
 
 
-# Prepare Contributing Factor
+# ===== Prepare Contributing Factors:
+# Prepare Contributing Factor 1:
 """ Unify Contributing Factor string """
 Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].str.lower()
-Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].str.lower()
 Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].str.strip()
+
+""" Fixing recording issus of Contributing Factor that has more than 50 MVC occurrences """
+Frequent_MVC_Factors = (Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts().keys()[Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts().values > 50])
+print(Frequent_MVC_Factors)
+
+Mapping = {
+    np.nan: 'unknown',
+    'illnes':'illness', 
+    'reaction to other uninvolved vehicle':'reaction to uninvolved vehicle',
+    'passing too closely': 'passing or lane usage improper',
+    }
+
+Data['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(Mapping)
+
+""" Consider only 95 % Frequent MVC Contributing Factors """
+CF1 = pd.DataFrame()
+CF1['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).keys()
+CF1['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).values
+
+threshold = 0
+for i in range(len(CF1['CONTRIBUTING FACTOR VEHICLE 1'].unique())):
+    Sum = CF1['Frequencies'][0:i+1].sum()
+    if Sum > 0.95:
+         threshold = i + 1
+         print("Threshold that covers 95% of " + "CONTRIBUTING FACTORs".lower() +  " = " + f"{threshold}")
+         break 
+Focus_Factors_Type_1 = list(CF1['CONTRIBUTING FACTOR VEHICLE 1'][0:threshold].values)
+print(Focus_Factors_Type_1)
+
+# Prepare Contributing Factor 2:
+""" Unify Contributing Factor string """
+Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].str.lower()
 Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].str.strip()
 
-""" Drop Unspecified Contributing Factor """
-Data = Data [Data['CONTRIBUTING FACTOR VEHICLE 1'] != 'unspecified']
-Data = Data [Data['CONTRIBUTING FACTOR VEHICLE 2'] != 'unspecified']
+""" Fixing recording issus of Contributing Factor that has more than 50 MVC occurrences """
+Frequent_MVC_Factors = (Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts().keys()[Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts().values > 50])
+print(Frequent_MVC_Factors)
 
-""" Consider only most frequent Contributing Factor (covers more than 90 % of occurrences) """
-CF1 = pd.DataFrame()
-CF1['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).keys()
-CF1['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).values
-CF1['Frequencies'][0:17].sum()  
-CF1['CONTRIBUTING FACTOR VEHICLE 1'][0:17].values
+Mapping = {
+    np.nan: 'unknown',
+    'illnes':'illness', 
+    'reaction to other uninvolved vehicle':'reaction to uninvolved vehicle',
+    'passing too closely': 'passing or lane usage improper',
+    }
 
+Data['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(Mapping)
 
-Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='following too closely', value='following/passing too closely', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='passing too closely', value='following/passing too closely', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='passing or lane usage improper', value='unsafe lane changing/usage', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 1'].replace(to_replace='unsafe lane changing', value='unsafe lane changing/usage', inplace=True)
-
-
-CF1 = pd.DataFrame()
-CF1['CONTRIBUTING FACTOR VEHICLE 1'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).keys()
-CF1['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 1'].value_counts(normalize=True).values
-CF1['Frequencies'][0:15].sum()  
-CF1_Names = CF1['CONTRIBUTING FACTOR VEHICLE 1'][0:15].values
-
-
+""" Consider only 95 % Frequent MVC Contributing Factors """
 CF2 = pd.DataFrame()
 CF2['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).keys()
 CF2['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).values
-CF2['Frequencies'][0:16].sum()  
-CF2['CONTRIBUTING FACTOR VEHICLE 2'][0:16].values
 
-Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='following too closely', value='following/passing too closely', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='passing too closely', value='following/passing too closely', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='passing or lane usage improper', value='unsafe lane changing/usage', inplace=True)
-Data['CONTRIBUTING FACTOR VEHICLE 2'].replace(to_replace='unsafe lane changing', value='unsafe lane changing/usage', inplace=True)
+threshold = 0
+for i in range(len(CF2['CONTRIBUTING FACTOR VEHICLE 2'].unique())):
+    Sum = CF2['Frequencies'][0:i+1].sum()
+    if Sum > 0.95:
+         threshold = i + 1
+         print("Threshold that covers 95% of " + "CONTRIBUTING FACTORs".lower() +  " = " + f"{threshold}")
+         break 
+Focus_Factors_Type_2 = list(CF2['CONTRIBUTING FACTOR VEHICLE 2'][0:threshold].values)
+print(Focus_Factors_Type_2)
 
-CF2 = pd.DataFrame()
-CF2['CONTRIBUTING FACTOR VEHICLE 2'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).keys()
-CF2['Frequencies'] = Data['CONTRIBUTING FACTOR VEHICLE 2'].value_counts(normalize=True).values
-CF2['Frequencies'][0:14].sum()  
-CF2_Names = CF2['CONTRIBUTING FACTOR VEHICLE 2'][0:14].values
+# Slice Focus Factors Type (covers more than 95 % of MVC occurrences)
+""" Slice """
+Focus_Factors_Types = list(set(list(Focus_Factors_Type_1) + list(Focus_Factors_Type_2))) 
+Data = Data[Data['CONTRIBUTING FACTOR VEHICLE 1'].isin((Focus_Factors_Types)) & (Data['CONTRIBUTING FACTOR VEHICLE 2'].isin(Focus_Factors_Types))].copy()
+print(Focus_Factors_Types)
 
-
-""" Slice Data: Contributing Factor in Focus_Contributing_Factor_Types (covers more than 90 % of the occurrences)"""
-Focus_Contributing_Factor_Types = list(set(list(CF1_Names) + list(CF2_Names)))
-Data = Data[Data['CONTRIBUTING FACTOR VEHICLE 2'].isin((Focus_Contributing_Factor_Types)) & (Data['CONTRIBUTING FACTOR VEHICLE 2'].isin(Focus_Contributing_Factor_Types))]
+""" Track Reduction in data """
+reduc('Slice Focus Factors Types')
 
 """ free memory """
 del(CF1,CF2)
 
 
-
-# Prepare Zip Features
+# =====  Prepare Zip Features:
 """ Drop Unspecified Zip """
 Data['ZIP CODE'].replace(to_replace='     ', value=np.nan, inplace=True)
-Data = Data.dropna()
 
 """ Change the Zip type to float64 """ 
 Data['ZIP CODE'] = pd.to_numeric(Data['ZIP CODE']) 
 
 
-# Adding new feutres:
+# =====  Extract new feutres:
 """ Add the 'Respone' feature, which is a binary future that says 0 if there is no injures or killed person and 1 other wise. """
 Data['Response'] = Data[['NUMBER OF PERSONS INJURED','NUMBER OF PERSONS KILLED']].sum(axis=1)
 Data['Response'] = Data['Response'].apply(lambda y: 1 if y > 0 else 0)
@@ -251,15 +353,22 @@ Data['Hour'] = pd.to_datetime(Data['CRASH TIME']).dt.hour
 """ Add 'Minute' feature """
 Data['Minute'] = pd.to_datetime(Data['CRASH TIME']).dt.minute
 
-# Drop uncompleted years
+
+# =====  Drop uncompleted years:
 """ Drop rows from 2012 since they are not completed  """
 Data = Data[Data['Year']!=2012]
 
 """ Drop rows from 2021 since they are not completed  """
 Data = Data[Data['Year']!=2021]
 
-# Adding Speed_Limits Mode data:
+""" Track Reduction in data """
+reduc('Drop uncompleted years')
 
+
+
+# ======================= Data Prepration (Cleaning and Transformation): 
+
+# =====  Adding Speed_Limits Mode Data:
 """ path """
 fileName = 'dot_VZV_Speed_Limits_20210507.csv'
 filePath = os.path.abspath(os.path.join(os.getcwd(), fileName))
@@ -267,8 +376,12 @@ filePath = os.path.abspath(os.path.join(os.getcwd(), fileName))
 """ load """
 speed_limits =  pd.read_csv(filePath)
 
-""" Drop speed limits missing values """
-speed_limits = speed_limits.dropna()
+""" Drop speed limits rows with missing values in important features """
+speed_limits = speed_limits[
+        speed_limits['street'].notna()  &
+        speed_limits['postvz_sl'].notna()  
+    ].copy()
+
 
 """ Prepare street name features of both datasets for merging """
 Data.loc[:,'ON STREET NAME'] = Data['ON STREET NAME'].str.lower()
@@ -281,7 +394,7 @@ print('Merging Speed Limits:')
 print(f"    Number of Matched Streets = {len(Matched_streets)}")
 print(f"    Number of Unmatched Streets = {len(Data['ON STREET NAME'].unique()) - len(Matched_streets)}")
 
-""" calculate speed limits mode the mode """
+""" Calculate speed limits mode"""
 Street_Speed_Mode = {}
 streets = speed_limits['street'].unique()
 for street in streets:
@@ -293,12 +406,14 @@ for street in streets:
 Data = Data[Data['ON STREET NAME'].isin(streets)].copy()
 Data['SPEED LIMIT MODE'] = Data['ON STREET NAME'].apply(lambda street: Street_Speed_Mode[street])
 
+""" Track Reduction in data """
+reduc('Adding Speed_Limits')
+
 """ Free memory """
 del(speed_limits)
 
 
-
-# Adding weather data:
+# =====  Adding weather data:
 """
 Attributes description:
     AWND : Average wind speed
@@ -322,7 +437,6 @@ Attributes description:
     WT06 : Glaze or rime
 """
 
-
 """ Path """
 fileName = 'weather.csv'
 filePath = os.path.abspath(os.path.join(os.getcwd(), fileName))
@@ -343,13 +457,12 @@ weather_features = (
 weather = weather[weather_features]
 weather = weather.fillna(0)
 
-
 """ prepare rain related features: 
         PRCP : Precipitation
         WT16 : Rain(may include freezing rain, drizzle, and freezing drizzle)"
 """
 weather[['PRCP','WT16']]
-weather['PRCP'].value_counts()
+weather['PRCP'].value_counts().values
 weather['WT16'].value_counts() # 23 
 
 weather['Precipitation'.upper()] = weather['PRCP'].copy()
@@ -373,7 +486,7 @@ weather['Snow depth'.upper()] = weather['SNWD'].copy()
 weather = weather.drop(columns=['SNOW','SNWD','WT18'])
 
 weather['Snow fall'.upper()].value_counts()
-weather['Snow fall'.upper()].value_counts()
+weather['Snow depth'.upper()].value_counts()
 
 
 """ prepare fog/vision related features:
@@ -412,19 +525,17 @@ Data['DATE'] = pd.to_datetime(Data['CRASH DATE']).dt.date
 Data = pd.merge(Data, weather, on='DATE', how='left')
 Data = Data.drop(columns=['DATE'])
 
+""" Track Reduction in data """
+reduc('Adding Weather')
 
-""" free memory """
-del(weather)
-
-
-""" View and rename """
+""" View and Rename Weather features """
 Data['Average wind speed'.upper()] = Data['AWND'].copy()
 Data['Maximum temperature'.upper()] = Data['TMAX'].copy()
 Data['Minimum temperature'.upper()] = Data['TMIN'].copy()
 Data = Data.drop(columns=['AWND','TMAX','TMIN'])
 
-Data.head(n=2)
-Data.columns
+""" free memory """
+del(weather)
 
 
 
