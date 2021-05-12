@@ -774,7 +774,7 @@ def Bokeh_plot(plotMe):
             (plotMe == 'VEHICLE TYPE CODE 2') |
             (plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | 
             (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')
-        ):
+        ): # Notice the sad face, COOL! 
         raise TypeError(
             "Not allowed parameter value for 'plotMe' in function 'Bokeh_plot'\n" +
             "The allowed parameter values are:\n" +
