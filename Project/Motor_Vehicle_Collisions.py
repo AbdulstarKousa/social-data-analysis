@@ -36,6 +36,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
 import folium
+from bokeh.io import show
+from bokeh.io import output_notebook
+from bokeh.models import ColumnDataSource
+from bokeh.models import FactorRange
+from bokeh.models import Legend
+from bokeh.plotting import figure
+from bokeh import palettes
+output_notebook() # open the bokeh viz on the notebook.
+
 
 
 
@@ -539,8 +548,14 @@ del(weather)
 
 
 
+# ======================= Save final Data:
+fileName = 'MVC_SL_W_Final.csv'
+filePath = os.path.abspath(os.path.join(os.getcwd(), fileName))
+Data.to_csv(filePath)
+
+
 # ======================= Data Exploration:
-# Summary Statistics:
+# ======== Summary Statistics:
 """ for object features """
 Desc_O = Data.select_dtypes(include=object).describe()
 display(Desc_O)
@@ -557,7 +572,7 @@ set_option('precision', 2)
 display(Desc_N)
 
 
-# Some interesting counts:
+# ======== Some interesting counts:
 """ Number of MVC injured persons 2013 - 2020 """
 Data['NUMBER OF PERSONS INJURED'].sum()
 
@@ -576,12 +591,23 @@ print(grouping[0])
 print(grouping[1])
 
 
-# Correlation Matrix 
-display(Data.corr(method='pearson'))
+# ======== Box and whisker plots
+""" For MVC Data """
+Box_lst = ['ZIP CODE', 'LATITUDE', 'LONGITUDE', 'NUMBER OF PERSONS INJURED','NUMBER OF PERSONS KILLED', 'Response', 'Year', 'Month', 'Hour','Minute']
+Data[Box_lst].plot(
+                kind='box', 
+                subplots=True, 
+                sharex=False, 
+                sharey=False, 
+                fontsize=10, 
+                layout=(4,3), 
+                figsize=(10,9),
+                title='Box-Plot for MVC data'
+                )
+plt.show()
 
-
-# Box and whisker plots
-Box_lst = ['LATITUDE', 'LONGITUDE', 'NUMBER OF PERSONS INJURED','NUMBER OF PERSONS KILLED', 'Response', 'Year', 'Month', 'Hour', 'Minute']
+""" For speed limits and weather data """
+Box_lst = ['SPEED LIMIT MODE', 'PRECIPITATION', 'SNOW FALL','SNOW DEPTH', 'FOG, SMOKE OR HAZE', 'AVERAGE WIND SPEED','MAXIMUM TEMPERATURE', 'MINIMUM TEMPERATURE']
 Data[Box_lst].plot(
                 kind='box', 
                 subplots=True, 
@@ -589,12 +615,14 @@ Data[Box_lst].plot(
                 sharey=False, 
                 fontsize=10, 
                 layout=(3,3), 
-                figsize=(10,7))
+                figsize=(10,7),
+                title='Box-Plot for Speed Limits and Weather data'
+                )
 plt.show()
 
 
-# Respone over Years - Plot  
-grouping = Data.groupby(['Response','Year']).count()['Hour']
+# ======== Respone over Years - Plot  
+grouping = Data.groupby(['Response','Year']).count()['CRASH DATE']
 
 fig, axs = plt.subplots(1, 2,figsize=(10, 5))
 fig.suptitle('Development of Respone over Years')
@@ -610,7 +638,7 @@ axs.flat[1].set_ylabel('Number of MVC')
 plt.show
 
 
-# Correlation Matrix Plot
+# ======== Correlation Matrix Plot
 fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
 cax = ax.matshow(Data.corr(), vmin=-1, vmax=1, interpolation='none')
@@ -625,74 +653,72 @@ plt.title('Correlation Matrix')
 plt.show()
 
 
-# Jitter - plots
-"""
-Response = 0
-Month = Jan. 
-Minutes   = 13:00 - 14:00  
-"""
+# ======== Jitter-plots:
+""" Init filtered data for Jitter plotS """ 
+month = 1
+hour = 13
+
+""" Jitter plot 01 : No-Response """
 data_Jit = Data[Data['Response']==0] 
-data_Jit = data_Jit[data_Jit['Month']==1]
-data_Jit = data_Jit[data_Jit['Hour']==13].reset_index(drop=True)
+data_Jit = data_Jit[data_Jit['Month']==month]
+data_Jit = data_Jit[data_Jit['Hour']==hour].reset_index(drop=True)
 plt.figure(figsize=(7, 4))
 sns.stripplot(data_Jit['Minute'].values, jitter=True, edgecolor='none', alpha=.50 ,color='k')
-plt.title('NYC MVC without injuries or kills\nJan 13:00-14:00')
+plt.title('NYC MVC without injuries or kills\nMonth = '+ str(month) + '\nHour = ' + str(hour) + '-'+ str(hour+1))
 plt.show()
 
-"""
-Response = 1
-Month = Jan. 
-Minutes   = 13:00 - 14:00  
-"""
+""" Jitter plot 02 : With-Response """
 data_Jit = Data[Data['Response']==1] 
 data_Jit = data_Jit[data_Jit['Month']==1]
 data_Jit = data_Jit[data_Jit['Hour']==13]
 plt.figure(figsize=(7, 4))
 sns.stripplot(data_Jit['Minute'].values, jitter=True, edgecolor='none', alpha=.50 ,color='k')
-plt.title('NYC MVC with injuries or kills\nJan 13:00-14:00')
+plt.title('NYC MVC with injuries or kills\nMonth = '+ str(month) + '\nHour = ' + str(hour) + '-'+ str(hour+1))
 plt.show()
 
 
-# Histogram - Plots 
-"""
-Latitude
-Response = 0
-Month = Jan. 
-"""
+# ========  Histogram-Plots: 
+""" Init filtered data for histogram plot """ 
+month = 1
+
+""" histogram 01: No-Respone """
 data_Hist = Data[Data['Response']==0]
-data_Hist = data_Hist[data_Hist['Month'] == 1]
+data_Hist = data_Hist[data_Hist['Month'] == month]
 plt.figure(figsize=(7, 5))
 plt.hist(data_Hist['LATITUDE'],bins= 50) 
-plt.title("NYC MVC\nwithout injuries or kills\nJan.")
+plt.title("NYC MVC\nwithout injuries or kills\nMonth = " + str(month))
 plt.xlabel("Latitude")
 plt.ylabel("Number of Observations")
 plt.show()                      
 
-"""
-Latitude
-Response = 1
-Month = Jan. 
-"""
+""" histogram 02: With-Respone """
 data_Hist = Data[Data['Response']==1]
-data_Hist = data_Hist[data_Hist['Month'] == 1]
+data_Hist = data_Hist[data_Hist['Month'] == month]
 plt.figure(figsize=(7, 5))
 plt.hist(data_Hist['LATITUDE'], bins=50) 
-plt.title("NYC MVC\nwith injuries or kills\nJan")
+plt.title("NYC MVC\nwith injuries or kills\nMonth = " + str(month))
 plt.xlabel("Latitude")
 plt.ylabel("Number of Observations")
 plt.show()
 
 
-# Map - plot
+# ======== Map-plot:
+""" Init filtered data for map plot """ 
+select_month    = 1
+start_year      = 2018
+end_year        = 2019
+
+data_Map = Data[
+            (Data['Month'] == select_month)&
+            (Data['Year'] >= start_year)&
+            (Data['Year']  < end_year)
+            ].reset_index(drop=True)
+
 """ Create a NYC Map instances """
 MapNYC = folium.Map(
             location = [40.730610, -73.935242], 
             tiles = 'Stamen Toner',
             zoom_start = 12)
-
-""" Display Map """
-display(MapNYC)
-
 
 """ Add Marker for the City Hall to Map"""
 folium.Marker(
@@ -703,26 +729,10 @@ folium.Marker(
                 icon='university',
                 prefix='fa')).add_to(MapNYC)
 
-""" Display Map"""
-display(MapNYC)
-
-
-"""
-Add NYC MVC Response location
-Year  = 2018 - 2020
-Month = Jan. 
-"""
-""" filtered data """ 
-data_Map = Data[
-            (Data['Month'] == 1)&
-            (Data['Year'] >= 2018)&
-            (Data['Year']  < 2021)
-            ].reset_index(drop=True)
-
 
 """ Start adding points """
 for i, row in data_Map.iterrows():
-    if(data_Map.iloc[i]['Response']==1):
+    if(row['Response']==1):
         folium.CircleMarker(
             location = [row['LATITUDE'], row['LONGITUDE']],
             radius=1,
@@ -743,99 +753,134 @@ display(MapNYC)
 
 
 
+# ======== Bokeh-Plot:
+# Define a general Bokeh-plot function, for all Contributing Factors and Vehicle Types: 
+def Bokeh_plot(plotMe):
+    # Function Descreption:  
+    """
+    Bokeh_plot(plotMe): 
+        # A general Bokeh-plot function, for all Contributing Factors and Vehicle Types.
+        # Takes plotMe:String, with one of the corresponding possible values: 
+            - 'VEHICLE TYPE CODE 1'
+            - 'VEHICLE TYPE CODE 2'
+            - 'CONTRIBUTING FACTOR VEHICLE 1'
+            - 'CONTRIBUTING FACTOR VEHICLE 2'
+        # Returns:
+            Bokeh plot or Error for invalid PlotMe value
+    """
 
-# # ======== Bokeh:
+    # Check parameter values: 
+    if not( (plotMe == 'VEHICLE TYPE CODE 1') | 
+            (plotMe == 'VEHICLE TYPE CODE 2') |
+            (plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | 
+            (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')
+        ):
+        raise TypeError(
+            "Not allowed parameter value for 'plotMe' in function 'Bokeh_plot'\n" +
+            "The allowed parameter values are:\n" +
+            "   - 'VEHICLE TYPE CODE 1'\n" +
+            "   - 'VEHICLE TYPE CODE 2'\n" +
+            "   - 'CONTRIBUTING FACTOR VEHICLE 1'\n" +
+            "   - 'CONTRIBUTING FACTOR VEHICLE 2'\n"
+        )
 
-# # Load Libraries:
-# from bokeh.io import show
-# from bokeh.io import output_notebook
-# output_notebook() # open the bokeh viz on the notebook.
-# from bokeh.models import ColumnDataSource
-# from bokeh.models import FactorRange
-# from bokeh.models import Legend
-# from bokeh.plotting import figure
-# from bokeh import palettes
+    # Define parameter corresponding Focus list:
+    Focus = []
+    if ((plotMe == 'VEHICLE TYPE CODE 1') | (plotMe == 'VEHICLE TYPE CODE 2')):
+        Focus = Focus_Vehicle_Types
+    elif ((plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')):
+        Focus = Focus_Factors_Types
 
-# # Slice Data: [2010 - 2018[ in focus crimes
-# focuscrimes = set(['WEAPON LAWS', 'PROSTITUTION', 'DRIVING UNDER THE INFLUENCE', 'ROBBERY', 'BURGLARY', 'ASSAULT', 'DRUNKENNESS', 'DRUG/NARCOTIC', 'TRESPASS', 'LARCENY/THEFT', 'VANDALISM', 'VEHICLE THEFT', 'STOLEN PROPERTY', 'DISORDERLY CONDUCT'])
-# focuscrimes_lst = list(focuscrimes)
-# Data['Year'] = pd.to_datetime(Data['Date']).dt.year
-# Data = Data[(Data['Year']>=2010) & (Data['Year']<2018)]
-# Data = Data[Data['Category'].isin(focuscrimes_lst)]
+    # Define parameter corresponding Figure height and width:
+    plot_height,plot_width = 0,0 
+    if ((plotMe == 'VEHICLE TYPE CODE 1') | (plotMe == 'VEHICLE TYPE CODE 2')):
+        plot_height=400
+        plot_width=800
+    elif ((plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')):
+        plot_height=550
+        plot_width=800
 
-# # Pivot Data (Table) for Bokeh:
-# Data['Hour'] = pd.to_datetime(Data['Time']).dt.hour
-# Table = pd.pivot_table(Data, 
-#                     index = "Hour", 
-#                     columns = "Category",
-#                     values = 'PdId',
-#                     aggfunc = 'count')
+    # Pivot Data (Table) for Bokeh:
+    Table = pd.pivot_table(Data, 
+                        index = 'Hour', 
+                        columns = plotMe,
+                        values = 'CRASH DATE',
+                        aggfunc = 'count')
 
+    # Normalize: (div by sum)
+    Table = Table.div(Table.sum(axis=0), axis=1)
 
-# # Normalize: (div by sum)
-# Table = Table.div(Table.sum(axis=0), axis=1)
+    # Add Hour column (We need Hour it for Bokeh)
+    Table['Hours']=Table.index
 
-# # Add Hour column (We need Hour it for Bokeh)
-# Table['Hours']=Table.index
+    # Convert data to bokeh data 
+    source = ColumnDataSource(Table)
 
-# # Convert data to bokeh data 
-# source = ColumnDataSource(Table)
+    # Create an Empty Bokeh Figure.
+    """ first, define x_range. It should be FactorRange of str(x_axis_values) """
+    x_range = list(map(str, Table['Hours'].values))  
+    x_range = FactorRange(factors=x_range)
 
-# # Create an Empty Bokeh Figure.
-# """ first, define x_range. It should be FactorRange of str(x_axis_values) """
-# x_range = list(map(str, Table['Hours'].values))  
-# x_range = FactorRange(factors=x_range)
-
-# """ then, create the figure """
-# p = figure(x_range = x_range, 
-#         plot_height=400,
-#         plot_width=800,
-#         title='Hourly Crimes Distribution',
-#         x_axis_label='Hour', 
-#         y_axis_label='Frequency'
-#         )
-
-
-# # Loop to create a barplot for each crime: 
-# """ first, Define colors (one color for each crime): """
-# colors = palettes.Category20[len(focuscrimes_lst)]
-
-# """ then,
-# Define an empty list to store legend items. 
-# The list contains tuples of Crime and the corresponding barplot list. 
-# Syntax:[(crime, [p.vbar]), ....]   
-# This will be used later to extract legends using Legend function.
-# """
-# legend_items = []
-
-# """ start looping """
-# for i, crime in enumerate(focuscrimes_lst):
-#     """ 
-#     p.vbar is a barplot of hour vs fraction. 
-#     For para see https://docs.bokeh.org/en/latest/docs/reference/plotting.html#bokeh.plotting.Figure.vbar  
-#     """
-#     vertical_bars  = p.vbar(x='Hours',  # x_axis (column name from Table), see Table['Hours']  
-#                     top=crime,          # y_axis (column name from Table), see Table['DRUG/NARCOTIC']
-#                     source=source,      # Table in Bokeh format 
-#                     width=0.9,          # width of each bar in vbar 
-#                     color=colors[i],    # color each crime from the colors list
-#                     muted=True,         # Start the plot muted 
-#                     muted_alpha=0.005,  # Shadow of each barplot 
-#                     fill_alpha=1,       # how much to fill each bar in the barplot 
-#                     line_alpha=1)       # how much to fill the border of each bar in the barplot
-#     legend_items.append((crime, [vertical_bars])) # store to legend_items list
+    """ then, create the figure """
+    p = figure(x_range = x_range, 
+            plot_height = plot_height,
+            plot_width = plot_width,
+            title='Hourly distribution of ' + plotMe.lower(),
+            x_axis_label='Hour', 
+            y_axis_label='Frequency'
+            )
     
+    # Loop to create a barplot for each label: 
+    """ first, Define colors (one color for each label): """
+    colors = palettes.Category20[len(Focus)]
+    
+    """ then,
+    Define an empty list to store legend items. 
+    The list contains tuples of label and the corresponding barplot list. 
+    Syntax:[(label, [p.vbar]), ....]   
+    This will be used later to extract legends using Legend function.
+    """
+    legend_items = []
 
-# # Start the interactive figure p
-# """ First, Extract legends, legends has the crime name and info from the cor. barplot's info """
-# legend = Legend(items=legend_items)
+    """ start looping """
+    for i, label in enumerate(Focus):
+        """ 
+        p.vbar is a barplot of hour vs fraction. 
+        For para see https://docs.bokeh.org/en/latest/docs/reference/plotting.html#bokeh.plotting.Figure.vbar  
+        """
+        vertical_bars  = p.vbar(x='Hours',  # x_axis (column name from Table), see Table['Hours']  
+                        top=label,        # y_axis (column name from Table), see Table 
+                        source=source,      # Table in Bokeh format 
+                        width=0.9,          # width of each bar in vbar 
+                        color=colors[i],    # color each label from the colors list
+                        muted=True,         # Start the plot muted 
+                        muted_alpha=0.005,  # Shadow of each barplot 
+                        fill_alpha=1,       # how much to fill each bar in the barplot 
+                        line_alpha=1)       # how much to fill the border of each bar in the barplot
+        legend_items.append((label, [vertical_bars])) # store to legend_items list
+        
+    # Start the interactive figure p
+    """ First, Extract legends, legends has the label name and info from the cor. barplot's info """
+    legend = Legend(items=legend_items)
 
-# """ Then, define legends' Place. """
-# p.add_layout(legend, 'left')
+    """ Then, define legends' Place. """
+    p.add_layout(legend, 'left')
 
-# """ Define the click policy """
-# p.legend.click_policy = 'mute'
+    """ Define the click policy """
+    p.legend.click_policy = 'mute'
 
-# """ show """
-# show(p)
+    """ show """
+    show(p)
 
+
+# Bokeh-plot: Vehicle Type Code 1:
+Bokeh_plot('VEHICLE TYPE CODE 1')
+
+# Bokeh-plot: Vehicle Type Code 2:
+Bokeh_plot('VEHICLE TYPE CODE 2')
+
+# Bokeh-plot: Contributing Factor Vehicle 1:
+Bokeh_plot('CONTRIBUTING FACTOR VEHICLE 1')
+
+# Bokeh-plot: Contributing Factor Vehicle 2:
+Bokeh_plot('CONTRIBUTING FACTOR VEHICLE 2')
