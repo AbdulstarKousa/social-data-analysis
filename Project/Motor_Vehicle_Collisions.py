@@ -47,7 +47,6 @@ output_notebook() # open the bokeh viz on the notebook.
 
 
 
-
 # ======================= Load data:
 """ Path """
 fileName = 'Motor_Vehicle_Collisions.csv'
@@ -356,6 +355,9 @@ Data['Year']    = pd.to_datetime(Data['CRASH DATE']).dt.year
 """ Add 'Month' feature """
 Data['Month']    = pd.to_datetime(Data['CRASH DATE']).dt.month
 
+""" Add 'Day' feature """
+Data['Day'] = pd.to_datetime(Data['CRASH TIME']).dt.day
+
 """ Add 'Hour' feature """
 Data['Hour'] = pd.to_datetime(Data['CRASH TIME']).dt.hour
 
@@ -375,8 +377,7 @@ reduc('Drop uncompleted years')
 
 
 
-# ======================= Data Prepration (Cleaning and Transformation): 
-
+# ======================= Adding new Datasets: 
 # =====  Adding Speed_Limits Mode Data:
 """ path """
 fileName = 'dot_VZV_Speed_Limits_20210507.csv'
@@ -390,7 +391,6 @@ speed_limits = speed_limits[
         speed_limits['street'].notna()  &
         speed_limits['postvz_sl'].notna()  
     ].copy()
-
 
 """ Prepare street name features of both datasets for merging """
 Data.loc[:,'ON STREET NAME'] = Data['ON STREET NAME'].str.lower()
@@ -606,7 +606,7 @@ Data[Box_lst].plot(
                 )
 plt.show()
 
-""" For speed limits and weather data """
+""" For Speed Limits and Weather data """
 Box_lst = ['SPEED LIMIT MODE', 'PRECIPITATION', 'SNOW FALL','SNOW DEPTH', 'FOG, SMOKE OR HAZE', 'AVERAGE WIND SPEED','MAXIMUM TEMPERATURE', 'MINIMUM TEMPERATURE']
 Data[Box_lst].plot(
                 kind='box', 
@@ -708,6 +708,7 @@ select_month    = 1
 start_year      = 2018
 end_year        = 2019
 
+""" Map data """
 data_Map = Data[
             (Data['Month'] == select_month)&
             (Data['Year'] >= start_year)&
@@ -728,7 +729,6 @@ folium.Marker(
                 color='blue',
                 icon='university',
                 prefix='fa')).add_to(MapNYC)
-
 
 """ Start adding points """
 for i, row in data_Map.iterrows():
@@ -788,7 +788,7 @@ def Bokeh_plot(plotMe):
     Focus = []
     if ((plotMe == 'VEHICLE TYPE CODE 1') | (plotMe == 'VEHICLE TYPE CODE 2')):
         Focus = Focus_Vehicle_Types
-    elif ((plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')):
+    else:
         Focus = Focus_Factors_Types
 
     # Define parameter corresponding Figure height and width:
@@ -796,7 +796,7 @@ def Bokeh_plot(plotMe):
     if ((plotMe == 'VEHICLE TYPE CODE 1') | (plotMe == 'VEHICLE TYPE CODE 2')):
         plot_height=400
         plot_width=800
-    elif ((plotMe == 'CONTRIBUTING FACTOR VEHICLE 1') | (plotMe == 'CONTRIBUTING FACTOR VEHICLE 2')):
+    else:
         plot_height=550
         plot_width=800
 
@@ -849,7 +849,7 @@ def Bokeh_plot(plotMe):
         For para see https://docs.bokeh.org/en/latest/docs/reference/plotting.html#bokeh.plotting.Figure.vbar  
         """
         vertical_bars  = p.vbar(x='Hours',  # x_axis (column name from Table), see Table['Hours']  
-                        top=label,        # y_axis (column name from Table), see Table 
+                        top=label,          # y_axis (column name from Table), see Table 
                         source=source,      # Table in Bokeh format 
                         width=0.9,          # width of each bar in vbar 
                         color=colors[i],    # color each label from the colors list
@@ -871,6 +871,7 @@ def Bokeh_plot(plotMe):
 
     """ show """
     show(p)
+
 
 
 # Bokeh-plot: Vehicle Type Code 1:
