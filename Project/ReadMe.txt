@@ -6,7 +6,7 @@ DataSets (the links are only visible to the group member):
     - Speed Limit data: https://dtudk-my.sharepoint.com/:x:/g/personal/s174360_dtu_dk/ESEjZ2_mbp5Cn0WhRUb90W4BrVvbbLy7TmWcjuPyE13JsA?e=0EZZGG 
     - Weather data: https://dtudk-my.sharepoint.com/:x:/g/personal/s174360_dtu_dk/ER-3RoaAzJlIoSFjnH1IcAkBwVmDfj8wy_lQJTRO1fmt6g?e=3fSZgn
     - Motor Vehicle Collisions data: https://dtudk-my.sharepoint.com/:x:/g/personal/s174360_dtu_dk/EaS1SzdewxFNuHzY0ZJ5xjgB-3a10XaIUIChqTe3f-FlXA?e=XkxQuA
-
+    - Final Data (Link to related Slack cell): https://socialdata2021.slack.com/archives/G01LVLSBVNY/p1620907231007400
 
 Meta-data (DataSets description): 
     - Motor Vehicle Collisions MetaData : https://dtudk-my.sharepoint.com/:x:/g/personal/s174360_dtu_dk/EV0clAe4thZCiQ9C7awi8IoBLA26I_JzDTV3217L4fYnlQ?e=3LLTvo
